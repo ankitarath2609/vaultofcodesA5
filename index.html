@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>EditKaro — Animated To-Do List</title>
+<meta name="description" content="Animated, interactive and aesthetic to-do list for EditKaro project" />
+
+<!-- Google font (uses system fallback if blocked) -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #0f1724;
+    --card: #0b1220;
+    --muted: #94a3b8;
+    --glass: rgba(255,255,255,0.04);
+    --accent: #ff5a5f;
+    --accent-2:#7c3aed;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --glass-2: rgba(255,255,255,0.03);
+    --radius: 14px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg,#071022 0%, #081426 45%, #071426 100%);
+    color: #e6eef8;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    padding:2rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+  }
+
+  /* Container */
+  .wrap{
+    width:100%;
+    max-width:1100px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius: 18px;
+    padding:1.25rem;
+    box-shadow: 0 10px 40px rgba(2,6,23,0.7), inset 0 1px rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.03);
+    overflow:hidden;
+  }
+
+  header.top {
+    display:flex;
+    gap:1rem;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:1rem;
+  }
+  .title {
+    display:flex;
+    gap:.8rem;
+    align-items:baseline;
+  }
+  .brand {
+    font-weight:700;
+    font-size:1.15rem;
+    color:var(--accent);
+    letter-spacing:0.2px;
+  }
+  .subtitle {
+    color:var(--muted);
+    font-size:.88rem;
+  }
+
+  /* controls area */
+  .controls {
+    display:grid;
+    grid-template-columns: 1fr 320px;
+    gap:1rem;
+    align-items:start;
+  }
+
+  /* input card */
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid rgba(255,255,255,0.02);
+    box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+  }
+  form.add {
+    display:grid;
+    grid-template-columns: 1fr 120px;
+    gap:.6rem;
+    align-items:center;
+  }
+  .input {
+    display:flex;
+    gap:.6rem;
+  }
+  .input input[type="text"], .input input[type="date"]{
+    flex:1;
+    padding:.65rem .8rem;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.02);
+    color:inherit;
+    outline:none;
+    transition: box-shadow .18s ease, transform .12s ease;
+  }
+  .input input[type="text"]:focus { box-shadow: 0 8px 30px rgba(124,58,237,0.12); transform: translateY(-1px);}
+  .select {
+    display:flex;
+    gap:.5rem;
+    align-items:center;
+  }
+  select, .small {
+    padding:.5rem .6rem;
+    border-radius:8px;
+    background: rgba(255,255,255,0.02);
+    border:1px solid rgba(255,255,255,0.03);
+    color:inherit;
+    outline:none;
+  }
+  button.primary {
+    background: linear-gradient(90deg,var(--accent),var(--accent-2));
+    padding:.7rem .9rem;
+    border-radius:10px;
+    border:none;
+    color:white;
+    font-weight:600;
+    cursor:pointer;
+    box-shadow: 0 6px 18px rgba(124,58,237,0.18);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  button.primary:active{ transform: translateY(1px); box-shadow:none;}
+
+  /* right column widgets */
+  .widgets {
+    display:flex;
+    flex-direction:column;
+    gap:.8rem;
+  }
+  .stats {
+    display:flex;
+    gap:.6rem;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .pill {
+    background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    padding:.5rem .7rem;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.025);
+    color:var(--muted);
+    font-weight:600;
+    font-size:.86rem;
+    display:inline-flex;
+    gap:.6rem;
+    align-items:center;
+  }
+
+  .progress-wrap{
+    margin-top:.6rem;
+  }
+  .progress {
+    height:10px;
+    background: rgba(255,255,255,0.03);
+    border-radius:999px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.02);
+  }
+  .progress > i {
+    display:block;
+    height:100%;
+    width:0%;
+    background: linear-gradient(90deg,var(--accent),var(--accent-2));
+    transition: width 700ms cubic-bezier(.2,.9,.2,1);
+  }
+  .progress-meta { display:flex; justify-content:space-between; font-size:.78rem; color:var(--muted); margin-top:.45rem; }
+
+  /* list area */
+  .list-area{
+    margin-top:1rem;
+    display:grid;
+    grid-template-columns: 1fr 260px;
+    gap:1rem;
+  }
+
+  .list {
+    min-height:220px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+    padding:.8rem;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.02);
+  }
+
+  .controls-bar {
+    display:flex;
+    gap:.5rem;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:.6rem;
+  }
+  .filters { display:flex; gap:.4rem; align-items:center; flex-wrap:wrap;}
+  .chip {
+    padding:.35rem .55rem;
+    border-radius:999px;
+    background: transparent;
+    border:1px solid rgba(255,255,255,0.03);
+    color:var(--muted);
+    font-weight:600;
+    font-size:.82rem;
+    cursor:pointer;
+  }
+  .chip.active { background: linear-gradient(90deg,var(--accent),var(--accent-2)); color:white; border-color:transparent; box-shadow: 0 8px 26px rgba(124,58,237,0.12);}
+
+  .search {
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+  }
+  .search input {
+    padding:.45rem .6rem;
+    border-radius:10px;
+    background: rgba(255,255,255,0.02);
+    border:1px solid rgba(255,255,255,0.03);
+    color:inherit;
+    outline:none;
+  }
+
+  /* items */
+  .items { display:flex; flex-direction:column; gap:.6rem; }
+  .item {
+    display:flex;
+    gap:.8rem;
+    align-items:center;
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+    padding:.55rem;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.02);
+    transition: transform .16s cubic-bezier(.2,.9,.2,1), box-shadow .16s ease;
+  }
+  .item.dragging { opacity:.6; transform: scale(.995); box-shadow: 0 18px 40px rgba(2,6,23,0.6);}
+  .drag-handle {
+    width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    border:1px dashed rgba(255,255,255,0.03);
+    color:var(--muted);
+    cursor:grab;
+    user-select:none;
+  }
+  .left {
+    flex:1;
+    min-width:0;
+  }
+  .title-row { display:flex; gap:.6rem; align-items:center; justify-content:space-between; }
+  .task-title { font-weight:600; font-size:.98rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .meta { color:var(--muted); font-size:.82rem; margin-top:.28rem; display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+  .actions { display:flex; gap:.4rem; align-items:center; }
+  .icon-btn {
+    background:transparent;border:none;color:var(--muted);padding:.35rem;border-radius:8px;cursor:pointer;
+  }
+  .icon-btn:hover { color:white; background: rgba(255,255,255,0.02); }
+
+  .done .task-title { text-decoration: line-through; color: rgba(255,255,255,0.5); font-weight:600;}
+  .priority-high { color:#ffc857; font-weight:700; }
+  .due-soon { color: #ffb4a2; font-weight:700; }
+  .overdue { color: var(--danger); font-weight:800; }
+
+  /* empty state */
+  .empty {
+    text-align:center;
+    color:var(--muted);
+    padding:2rem;
+    border-radius:10px;
+  }
+
+  /* right side: canvas/task quick view */
+  .right {
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+    padding:1rem;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.02);
+    min-height:220px;
+  }
+  .right h4 { margin:0 0 .6rem 0; color:var(--muted) }
+  .mini {
+    display:flex; gap:.5rem; align-items:center; justify-content:space-between; margin-bottom:.6rem;
+    padding:.45rem; border-radius:10px; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.02);
+  }
+
+  /* footer */
+  .footer {
+    margin-top:1rem;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:1rem;
+    color:var(--muted);
+    font-size:.88rem;
+  }
+
+  /* small screens */
+  @media (max-width:940px){
+    .controls { grid-template-columns: 1fr; }
+    .list-area { grid-template-columns: 1fr; }
+    .widgets { flex-direction:row; justify-content:space-between; }
+    .right { order:2 }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-label="Animated To-do list app">
+    <header class="top">
+      <div class="title">
+        <div class="brand">EditKaro</div>
+        <div class="subtitle">To-Do List — animated & interactive</div>
+      </div>
+
+      <div style="display:flex;gap:.6rem;align-items:center">
+        <button id="exportBtn" class="chip" title="Export tasks">Export</button>
+        <button id="importBtn" class="chip" title="Import tasks">Import</button>
+        <input id="fileInput" type="file" accept=".json,.csv" style="display:none" />
+      </div>
+    </header>
+
+    <section class="controls">
+      <div class="card">
+        <form id="addForm" class="add" aria-label="Add a new task">
+          <div class="input">
+            <input id="taskText" type="text" placeholder="Add new task — e.g. Edit client's reel" aria-label="Task description" required />
+            <select id="category" class="small" aria-label="Category">
+              <option value="General">General</option>
+              <option value="ShortForm">Short Form</option>
+              <option value="LongForm">Long Form</option>
+              <option value="Ads">Ads</option>
+              <option value="ColorGrading">Color Grading</option>
+            </select>
+            <input id="dueDate" type="date" aria-label="Due date" />
+          </div>
+
+          <div style="display:flex;gap:.5rem;align-items:center;justify-content:flex-end">
+            <select id="priority" class="small" aria-label="Priority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+            <button class="primary" type="submit" id="addBtn" title="Add task">Add</button>
+          </div>
+        </form>
+
+        <div style="margin-top:.8rem; display:flex; gap:.6rem; align-items:center; justify-content:space-between;">
+          <div class="stats">
+            <div class="pill" id="countPill">0 tasks</div>
+            <div class="pill" id="activePill">0 active</div>
+          </div>
+          <div style="color:var(--muted); font-size:.86rem">Tip: Drag tasks to reorder</div>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+          <div class="progress-meta"><div id="progressPercent">0%</div><div id="dueSoonCount">0 due soon</div></div>
+        </div>
+      </div>
+
+      <div class="widgets">
+        <div class="card" style="padding:.8rem">
+          <div style="display:flex;gap:.6rem;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+            <div style="font-weight:700">Filters</div>
+            <button id="clearCompleted" class="chip" title="Clear completed">Clear Done</button>
+          </div>
+
+          <div class="filters" role="tablist" aria-label="Task filters">
+            <button class="chip active" data-filter="all" aria-pressed="true">All</button>
+            <button class="chip" data-filter="active" aria-pressed="false">Active</button>
+            <button class="chip" data-filter="completed" aria-pressed="false">Completed</button>
+            <button class="chip" data-filter="today" aria-pressed="false">Due Today</button>
+          </div>
+
+          <div style="margin-top:.6rem">
+            <div style="font-weight:700;margin-bottom:.4rem">Sort</div>
+            <select id="sort" class="small" aria-label="Sort tasks">
+              <option value="manual">Manual (drag)</option>
+              <option value="date">Due date</option>
+              <option value="priority">Priority</option>
+              <option value="alpha">A → Z</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card right">
+          <h4>Quick View</h4>
+          <div id="quickList" aria-live="polite">
+            <div class="mini"><div>No tasks yet</div><div class="pill">—</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="list-area">
+      <div class="list card" id="taskList" aria-live="polite" aria-label="Tasks list">
+        <div class="controls-bar">
+          <div class="filters" id="categoryFilters"></div>
+          <div class="search">
+            <input id="search" placeholder="Search tasks..." aria-label="Search tasks" />
+            <button id="clearSearch" class="chip" title="Clear search">Clear</button>
+          </div>
+        </div>
+
+        <div class="items" id="itemsContainer">
+          <!-- tasks injected here -->
+        </div>
+
+        <div id="emptyState" class="empty" hidden>
+          <div style="font-size:1.05rem; margin-bottom:.6rem">No tasks found</div>
+          <div style="color:var(--muted)">Add a task above — try: "Create reel script"</div>
+        </div>
+      </div>
+
+      <aside class="card right" aria-label="Task details panel">
+        <h4>Details</h4>
+        <div id="detailBox">
+          <p class="empty" style="padding:0">Click a task to view details and edit.</p>
+        </div>
+      </aside>
+    </section>
+
+    <div class="footer">
+      <div>Local-only (stored in your browser). Use Export to save a backup.</div>
+      <div>&copy; EditKaro • Animated To-Do</div>
+    </div>
+  </div>
+
+<script>
+/* =========================
+   Animated Interactive To-Do
+   ========================= */
+
+(() => {
+  // === Utilities ===
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const uid = () => 't_'+Math.random().toString(36).slice(2,9);
+
+  // === DOM refs ===
+  const addForm = $('#addForm');
+  const taskText = $('#taskText');
+  const categoryEl = $('#category');
+  const dueDateEl = $('#dueDate');
+  const priorityEl = $('#priority');
+  const itemsContainer = $('#itemsContainer');
+  const countPill = $('#countPill');
+  const activePill = $('#activePill');
+  const progressBar = $('#progressBar');
+  const progressPercent = $('#progressPercent');
+  const dueSoonCount = $('#dueSoonCount');
+  const chips = $$('.chip[data-filter]');
+  const categoryFiltersEl = $('#categoryFilters');
+  const quickList = $('#quickList');
+  const emptyState = $('#emptyState');
+  const sortEl = $('#sort');
+  const searchEl = $('#search');
+  const clearSearchBtn = $('#clearSearch');
+  const detailBox = $('#detailBox');
+  const clearCompletedBtn = $('#clearCompleted');
+  const exportBtn = $('#exportBtn');
+  const importBtn = $('#importBtn');
+  const fileInput = $('#fileInput');
+
+  // === App state ===
+  let tasks = []; // {id, text, category, dueDate, priority, done, created, order}
+  const STORAGE_KEY = 'editkaro_tasks_v1';
+
+  // === Colors / Priority order ===
+  const PRIORITY_ORDER = { high: 3, medium: 2, low: 1 };
+
+  // === Init ===
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      tasks = raw ? JSON.parse(raw) : [];
+      // normalize missing fields
+      tasks = tasks.map((t,i) => ({ order: i, ...t, id: t.id || uid(), done: !!t.done }));
+    } catch(e) {
+      tasks = [];
+    }
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    render();
+  }
+
+  // === Helpers ===
+  function formatDate(d) {
+    if(!d) return '';
+    const dt = new Date(d);
+    if (isNaN(dt)) return '';
+    return dt.toLocaleDateString();
+  }
+  function isDueToday(d) {
+    if(!d) return false;
+    const t = new Date(d); const today = new Date();
+    return t.getFullYear()===today.getFullYear() && t.getMonth()===today.getMonth() && t.getDate()===today.getDate();
+  }
+  function isOverdue(d) {
+    if(!d) return false;
+    const t = new Date(d); const today = new Date();
+    // consider overdue if before today (strict)
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return t < startOfToday;
+  }
+  function dueSoonCountCalc() {
+    const now = new Date();
+    const soon = tasks.filter(t => !t.done && t.dueDate).filter(t => {
+      const td = new Date(t.dueDate);
+      const diffDays = Math.ceil((td - new Date()) / (1000*60*60*24));
+      return diffDays >= 0 && diffDays <= 2;
+    }).length;
+    return soon;
+  }
+
+  // === Rendering ===
+  function render() {
+    // Sort by order
+    tasks.sort((a,b) => (a.order||0) - (b.order||0));
+
+    // Filters
+    const activeFilter = $$('.chip[data-filter].active')[0]?.dataset?.filter || 'all';
+    const query = (searchEl.value || '').trim().toLowerCase();
+
+    // Category chips (unique from tasks)
+    const cats = Array.from(new Set(tasks.map(t => t.category || 'General')));
+    categoryFiltersEl.innerHTML = cats.map(c => `<button class="chip" data-cat="${c}">${c}</button>`).join(' ');
+    $$('.chip[data-cat]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // toggle category filter: single selection
+        $$('.chip[data-cat]').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        // apply filter by setting a temporary chip on top (simulate)
+        $$('.chip[data-filter]').forEach(b=>b.classList.remove('active'));
+        document.querySelector('.chip[data-filter="all"]')?.classList.add('active');
+        render(); // re-render to use selected category
+      });
+    });
+
+    // compute visible items
+    const selectedCategoryBtn = $$('.chip[data-cat].active')[0];
+    const selectedCategory = selectedCategoryBtn ? selectedCategoryBtn.dataset.cat : null;
+
+    let visible = tasks.filter(t => {
+      if (activeFilter === 'active') if (t.done) return false;
+      if (activeFilter === 'completed') if (!t.done) return false;
+      if (activeFilter === 'today') if (!isDueToday(t.dueDate)) return false;
+      if (selectedCategory && selectedCategory !== t.category) return false;
+      if (query) {
+        const inText = t.text.toLowerCase().includes(query);
+        const inCat = (t.category||'').toLowerCase().includes(query);
+        return inText || inCat;
+      }
+      return true;
+    });
+
+    // show/hide empty
+    emptyState.hidden = visible.length > 0;
+
+    // create DOM
+    itemsContainer.innerHTML = '';
+    visible.forEach((t, idx) => {
+      const el = document.createElement('div');
+      el.className = 'item' + (t.done ? ' done' : '');
+      el.draggable = true;
+      el.dataset.id = t.id;
+
+      el.innerHTML = `
+        <div class="drag-handle" title="Drag to reorder" aria-hidden="true">☰</div>
+        <div class="left">
+          <div class="title-row">
+            <div style="display:flex;gap:.6rem;align-items:center;">
+              <div class="task-title">${escapeHtml(t.text)}</div>
+              <div style="display:flex;gap:.4rem;align-items:center;">
+                <span class="${t.priority==='high'?'priority-high':''}">${t.priority==='high'?'⚑':''}</span>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="icon-btn toggle">${t.done? '✔' : '○'}</button>
+              <button class="icon-btn edit">✎</button>
+              <button class="icon-btn del">🗑</button>
+            </div>
+          </div>
+          <div class="meta">
+            <div class="pill" title="Category">${t.category || 'General'}</div>
+            <div>${t.dueDate ? formatDate(t.dueDate) : ''}</div>
+            <div class="${isOverdue(t.dueDate) ? 'overdue' : isDueToday(t.dueDate) ? 'due-soon':''}">${isOverdue(t.dueDate)?'Overdue': isDueToday(t.dueDate) ? 'Due Today' : ''}</div>
+          </div>
+        </div>
+      `;
+
+      // event handlers
+      el.querySelector('.toggle').addEventListener('click', () => {
+        t.done = !t.done; save();
+      });
+      el.querySelector('.del').addEventListener('click', () => {
+        if (!confirm('Delete task?')) return;
+        tasks = tasks.filter(x => x.id !== t.id); save();
+      });
+      el.querySelector('.edit').addEventListener('click', () => openEditModal(t));
+      // drag handlers
+      el.addEventListener('dragstart', e => {
+        el.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', t.id);
+      });
+      el.addEventListener('dragend', () => { el.classList.remove('dragging'); save(); });
+
+      itemsContainer.appendChild(el);
+    });
+
+    // dragover handling for reorder
+    itemsContainer.querySelectorAll('.item').forEach(node => {
+      node.addEventListener('dragover', e => {
+        e.preventDefault();
+        const dragging = itemsContainer.querySelector('.dragging');
+        if (!dragging || dragging === node) return;
+        // determine insert position
+        const nodes = Array.from(itemsContainer.children);
+        const draggingIndex = nodes.indexOf(dragging);
+        const nodeIndex = nodes.indexOf(node);
+        if (draggingIndex < nodeIndex) {
+          node.after(dragging);
+        } else {
+          node.before(dragging);
+        }
+      });
+    });
+
+    // after potential reorder, update order indexes
+    Array.from(itemsContainer.children).forEach((child, i) => {
+      const id = child.dataset.id;
+      const t = tasks.find(x => x.id === id);
+      if (t) t.order = i;
+    });
+
+    // update counts and progress
+    const total = tasks.length;
+    const done = tasks.filter(t => t.done).length;
+    const active = total - done;
+    countPill.textContent = `${total} ${total===1?'task':'tasks'}`;
+    activePill.textContent = `${active} active`;
+    const percent = total === 0 ? 0 : Math.round((done/total)*100);
+    progressBar.style.width = percent + '%';
+    progressPercent.textContent = percent + '%';
+    dueSoonCount.textContent = `${dueSoonCountCalc()} due soon`;
+
+    // quick view
+    const imax = tasks.slice(0,5);
+    if (tasks.length===0) {
+      quickList.innerHTML = `<div class="mini"><div>No tasks yet</div><div class="pill">—</div></div>`;
+    } else {
+      quickList.innerHTML = imax.map(t => `<div class="mini"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(t.text)}</div><div class="pill">${t.done? 'Done' : (t.dueDate ? formatDate(t.dueDate) : '—')}</div></div>`).join('');
+    }
+  }
+
+  // small escaping to avoid XSS (we control content but be safe)
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[s]));
+  }
+
+  // === Add task ===
+  addForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const text = (taskText.value || '').trim();
+    if (!text) return taskText.focus();
+    const newTask = {
+      id: uid(),
+      text,
+      category: categoryEl.value || 'General',
+      dueDate: dueDateEl.value || '',
+      priority: priorityEl.value || 'medium',
+      done: false,
+      created: new Date().toISOString(),
+      order: tasks.length
+    };
+    tasks.push(newTask);
+    // animation: briefly highlight
+    taskText.value = ''; dueDateEl.value = ''; priorityEl.value = 'medium';
+    save();
+    // flash on add
+    setTimeout(()=> {
+      const added = document.querySelector(`[data-id="${newTask.id}"]`);
+      if (added) {
+        added.style.transform = 'translateY(-6px)';
+        setTimeout(()=> added.style.transform = '', 220);
+      }
+    }, 80);
+  });
+
+  // === Edit modal (inline detail) ===
+  function openEditModal(t) {
+    detailBox.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        <label style="font-weight:600">Task</label>
+        <input id="editText" value="${escapeHtml(t.text)}" style="padding:.5rem;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)" />
+        <label style="font-weight:600">Category</label>
+        <input id="editCategory" value="${escapeHtml(t.category || '')}" style="padding:.4rem;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)" />
+        <label style="font-weight:600">Due Date</label>
+        <input id="editDue" type="date" value="${t.dueDate || ''}" style="padding:.4rem;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)" />
+        <label style="font-weight:600">Priority</label>
+        <select id="editPrio" style="padding:.4rem;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)">
+          <option value="low" ${t.priority==='low'?'selected':''}>Low</option>
+          <option value="medium" ${t.priority==='medium'?'selected':''}>Medium</option>
+          <option value="high" ${t.priority==='high'?'selected':''}>High</option>
+        </select>
+        <div style="display:flex;gap:.6rem;justify-content:flex-end;margin-top:.4rem">
+          <button class="chip" id="cancelEdit">Cancel</button>
+          <button class="primary" id="saveEdit">Save</button>
+        </div>
+      </div>
+    `;
+    $('#cancelEdit').addEventListener('click', () => { detailBox.innerHTML = '<p class="empty" style="padding:0">Click a task to view details and edit.</p>'; });
+    $('#saveEdit').addEventListener('click', () => {
+      t.text = $('#editText').value.trim();
+      t.category = $('#editCategory').value.trim() || 'General';
+      t.dueDate = $('#editDue').value || '';
+      t.priority = $('#editPrio').value;
+      save();
+      detailBox.innerHTML = '<p class="empty" style="padding:0">Saved.</p>';
+      setTimeout(()=> detailBox.innerHTML = '<p class="empty" style="padding:0">Click a task to view details and edit.</p>', 900);
+    });
+  }
+
+  // === Filters / UI interactions ===
+  $$('.chip[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('.chip[data-filter]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
+      btn.classList.add('active'); btn.setAttribute('aria-pressed','true');
+      render();
+    });
+  });
+
+  sortEl.addEventListener('change', () => {
+    const s = sortEl.value;
+    if (s === 'manual') {
+      tasks.sort((a,b) => (a.order||0) - (b.order||0));
+    } else if (s === 'date') {
+      tasks.sort((a,b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+    } else if (s === 'priority') {
+      tasks.sort((a,b) => (PRIORITY_ORDER[b.priority]||0) - (PRIORITY_ORDER[a.priority]||0));
+    } else if (s === 'alpha') {
+      tasks.sort((a,b) => a.text.localeCompare(b.text));
+    }
+    // reassign orders after sort
+    tasks.forEach((t,i)=> t.order = i);
+    save();
+  });
+
+  clearSearchBtn.addEventListener('click', () => { searchEl.value = ''; render(); });
+
+  searchEl.addEventListener('input', () => { render(); });
+
+  clearCompletedBtn.addEventListener('click', () => {
+    if (!confirm('Remove all completed tasks?')) return;
+    tasks = tasks.filter(t => !t.done);
+    save();
+  });
+
+  // export/import
+  exportBtn.addEventListener('click', () => {
+    const data = JSON.stringify(tasks, null, 2);
+    const blob = new Blob([data], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'editkaro-tasks.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  importBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        if (!Array.isArray(parsed)) throw new Error('Invalid format');
+        // assign new ids if missing
+        parsed.forEach((t,i)=> { t.id = t.id || uid(); t.order = i; });
+        tasks = parsed.concat(tasks); // append
+        save();
+        alert('Imported ' + parsed.length + ' tasks.');
+      } catch (err) {
+        alert('Import failed: ' + err.message);
+      }
+    };
+    reader.readAsText(f);
+    // clear input
+    fileInput.value = '';
+  });
+
+  // keyboard: Enter to add when focused on input
+  taskText.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      $('#addBtn').click();
+    }
+  });
+
+  // small accessibility: announce saves
+  const live = document.createElement('div');
+  live.setAttribute('aria-live','polite');
+  live.style.position='absolute';
+  live.style.left='-9999px';
+  document.body.appendChild(live);
+
+  // === Initial load ===
+  load(); render();
+
+  // expose for debugging
+  window.__EDITKARO = { tasks, save, load, render };
+
+})();
+</script>
+</body>
+</html>
